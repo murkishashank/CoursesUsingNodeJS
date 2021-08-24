@@ -1,0 +1,23 @@
+{
+  "name": "coursesusingnodejs",
+  "version": "1.0.0",
+  "description": "Adding Syllabus to a Course Using NodeJS",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/murkishashank/CoursesUsingNodeJS.git"
+  },
+  "author": "Shashank",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/murkishashank/CoursesUsingNodeJS/issues"
+  },
+  "homepage": "https://github.com/murkishashank/CoursesUsingNodeJS#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mysql": "^2.18.1"
+  }
+}
