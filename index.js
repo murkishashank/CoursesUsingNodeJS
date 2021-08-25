@@ -11,47 +11,82 @@ var connection = mysql.createConnection({
     user: "root",
     password: "",
     database: "tecnics"
-});
+})
 
 connection.connect(function(err) {
 	if (err) throw err;
-});
-
-app.get('/api/syllabus', (request, respond) => {
-	connection.query("SELECT * FROM Syllabus WHERE UserID = 5002 AND Status = 1", (error, result, fields) => {
-		if (error) throw error;
-		respond.send(result);
-	});
 })
 
-app.post('/api/syllabus', (req, res) => {
-	connection.query("INSERT INTO Syllabus(UserID, Title, Description, Tags, Status) VALUES (" + req.body.USERID + ", '" + req.body.title + "', '" + req.body.description + "', '" + req.body.tags + "', 1)", function (err, result, fields) {
-		if (err) throw err;
-		res.status(201);
-		res.send(result);
-		console.log(result.insertId);
-	});
-})
-
-app.put('/api/syllabus/:id', (req, res) => {
-	id = req.params.id;
-	console.log(id);
-	connection.query("UPDATE Syllabus SET Title = '" + req.body.title + "', Description = '" + req.body.description + "', Tags = '" + req.body.tags + "' WHERE id = " + id, (err, result, fields) => {
-		if(err) throw err;
-		res.status(200);
-		res.send(result)
+app.get('/api/course', (request, response) => {
+	connection.query("SELECT id, Title, Description, Tags FROM Syllabus WHERE UserID = 5002 AND Status = 1", (error, result, fields) => {
+		if (error) throw error
+		response.json(result)
 	})
 })
 
-app.delete('/api/syllabus/:id', (request, respond) => {
-	connection.query("UPDATE Syllabus SET Status = 0 WHERE id = " + id, (error, result, fields) => {
-		if(error) throw error;
-		respond.status(204);
+app.get('/api/syllabus/:id', (request, response) => {
+	connection.query(mysql.format("SELECT id, Title, Description, Tags FROM Syllabus WHERE Status = 1 AND id = ?", [request.params.id]), (error, result, fields) => {
+		if (error) throw error
+		response.json(result)
+	})
+})
+
+app.post('/api/syllabus', (request, response) => {
+	const title = request.body.title;
+	const description = request.body.description;
+	const tags = request.body.tags;
+	if (title.length != 0 && description.length != 0 && tags != 0) {
+		const sql = "INSERT INTO Syllabus(UserID, Title, Description, Tags, Status) VALUES (?, ?, ?, ?, 1)";
+		const values = [request.body.UserID, title , description, tags];
+		connection.query(mysql.format(sql, values), function (error, result, fields) {
+			if (error) throw error
+			response.status(201)
+			connection.query(mysql.format("SELECT id, Title, Description, Tags FROM Syllabus WHERE id = ?", [result.insertId]), (error, result, fields) => {
+				response.json(result)
+			})
+		})
+	}
+	else {
+		response.status(400)
+		response.json({"error":"Invalid in Input."})
+	}
+})
+
+app.put('/api/syllabus/:id', (request, response) => {
+	const id = request.params.id
+	connection.query(mysql.format("SELECT id FROM Syllabus WHERE Status = 1 AND id = ?", [id]), (error, result, fields) => {
+		if (result.length > 0) {
+			connection.query(mysql.format("UPDATE Syllabus SET Title = ?, Description = ?, Tags = ? WHERE id = ?", [request.body.title, request.body.description, request.body.tags, id]), (error, result, fields) => {
+				if(error) throw error
+				response.status(200)
+				connection.query(mysql.format("SELECT id, Title, Description, Tags FROM Syllabus WHERE id = ?", [id]), (error, result, fields) => {
+					response.json(result)
+				})
+			})
+		}
+		else {
+			response.status(404);
+			response.send("Failed to Update.")
+		}
+	})
+})
+
+app.delete('/api/syllabus/:id', (request, response) => {
+	const id = request.params.id;
+	connection.query(mysql.format("SELECT id FROM Syllabus WHERE Status = 1 AND id = ?", [id]), (error, result, fields) => {
+		if (result.length > 0) {
+			connection.query(mysql.format("UPDATE Syllabus SET Status = 0 WHERE id = ?", [id]), (error, result, fields) => {
+				if(error) throw error
+				response.status(204)
+			})
+		}
+		else {
+			response.sendStatus(404)
+			response.send("Failed to delete")
+		}
 	})
 })
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`)
+	console.log(`Example app listening at http://localhost:${port}`)
 })
-
-// connection.end()
